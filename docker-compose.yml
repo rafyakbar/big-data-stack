@@ -66,6 +66,7 @@ services:
       - NIFI_WEB_HTTP_PORT=8080
     volumes:
       - nifi-data:/opt/nifi/nifi-current/logs
+      - ./work/dataset:/dataset
 
   jupyter:
     image: jupyter/pyspark-notebook:x86_64-spark-3.5.0
