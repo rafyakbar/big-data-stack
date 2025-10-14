@@ -1,201 +1,85 @@
 services:
-
-  # --- PostgreSQL (Metastore untuk Hive) ---
-  postgres:
-    image: postgres:15
-    container_name: postgres
-    environment:
-      POSTGRES_USER: hive
-      POSTGRES_PASSWORD: hive
-      POSTGRES_DB: metastore
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - bigdata-net
-
-  # --- Hadoop HDFS (NameNode + DataNode) ---
   namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
     container_name: namenode
-    ports:
-      - "9870:9870"  # Web UI
-      - "9000:9000"  # RPC
-    volumes:
-      - hadoop_namenode:/hadoop/dfs/name
     environment:
-      - CLUSTER_NAME=bigdata-cluster
-    env_file:
-      - ./.env
-    networks:
-      - bigdata-net
+      - CLUSTER_NAME=test
+    ports:
+      - "9870:9870"
+    volumes:
+      - namenode-data:/hadoop/dfs/name
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:8020
     depends_on:
       - namenode
-    ports:
-      - "9864:9864"  # DataNode Web UI
     volumes:
-      - hadoop_datanode:/hadoop/dfs/data
-    environment:
-      - CLUSTER_NAME=bigdata-cluster
-    env_file:
-      - ./.env
-    networks:
-      - bigdata-net
+      - datanode-data:/hadoop/dfs/data
 
-  # --- Hive Metastore + Hive Server2 ---
-  hive-metastore:
-    image: apache/hive:3.1.3
-    container_name: hive-metastore
-    depends_on:
-      - postgres
-      - namenode
-      - datanode
-    ports:
-      - "9083:9083"
-    environment:
-      SERVICE_NAME: metastore
-      HIVE_METASTORE_URI: thrift://hive-metastore:9083
-      DB_DRIVER: postgres
-      DB_TYPE: postgres
-      DB_NAME: metastore
-      DB_HOST: postgres
-      DB_USER: hive
-      DB_PASSWORD: hive
-      HIVE_METASTORE_WAREHOUSE_DIR: /user/hive/warehouse
-      HIVE_DATABASE_HOST: postgres
-      HIVE_DATABASE_PORT: 5432
-      HIVE_DATABASE_NAME: metastore
-      HIVE_DATABASE_USER: hive
-      HIVE_DATABASE_PASSWORD: hive
-    volumes:
-      - ./init-hive/hive-site.xml:/opt/hive/conf/hive-site.xml
-      - ./hive-jdbc/postgresql-42.7.3.jar:/opt/hive/lib/postgresql-42.7.3.jar
-    command: >
-      bash -c "
-        /opt/hive/bin/schematool -dbType postgres -initSchema &&
-        /opt/hive/bin/hive --service metastore
-      "
-    networks:
-      - bigdata-net
-
-  hive-server2:
-    image: apache/hive:3.1.3
-    container_name: hive-server2
-    depends_on:
-      - hive-metastore
-    ports:
-      - "10000:10000"  # HiveServer2
-      - "10002:10002"  # Web UI
-    environment:
-      SERVICE_NAME: hiveserver2
-      DB_TYPE: postgres
-      HIVE_METASTORE_URI: thrift://hive-metastore:9083
-      HIVE_SERVER2_THRIFT_PORT: 10000
-    volumes:
-      - ./init-hive/hive-site.xml:/opt/hive/conf/hive-site.xml
-      - ./hive-jdbc/postgresql-42.7.3.jar:/opt/hive/lib/postgresql-42.7.3.jar
-    command: >
-      bash -c "
-        sleep 30 &&
-        /opt/hive/bin/hive --service hiveserver2
-      "
-    networks:
-      - bigdata-net
-
-  # --- PrestoDB (Trino) ---
-  presto:
-    image: trinodb/trino:432
-    container_name: presto
-    depends_on:
-      - hive-metastore
-      - hive-server2
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./init-presto/:/etc/trino/
-    networks:
-      - bigdata-net
-
-  # --- Apache NiFi ---
-  nifi:
-    image: apache/nifi:1.24.0
-    container_name: nifi
-    ports:
-      - "8081:8080"  # NiFi UI
-    environment:
-      NIFI_WEB_HTTP_PORT: 8080
-      NIFI_CLUSTER_IS_NODE: false
-    volumes:
-      - nifi_database_repository:/opt/nifi/nifi-current/database_repository
-      - nifi_flowfile_repository:/opt/nifi/nifi-current/flowfile_repository
-      - nifi_content_repository:/opt/nifi/nifi-current/content_repository
-      - nifi_provenance_repository:/opt/nifi/nifi-current/provenance_repository
-    networks:
-      - bigdata-net
-
-  # --- Spark + Jupyter Lab ---
-  spark-notebook:
-    image: jupyter/all-spark-notebook:x86_64-spark-3.5.0
-    container_name: spark-notebook
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
+    container_name: resourcemanager
     depends_on:
       - namenode
-      - hive-metastore
-    ports:
-      - "8888:8888"
-    environment:
-      GRANT_SUDO: "yes"
-      JUPYTER_ENABLE_LAB: "yes"
-    volumes:
-      - ./notebooks:/home/jovyan/work
-      - ./spark-defaults.conf:/usr/local/spark/conf/spark-defaults.conf
-    networks:
-      - bigdata-net
-
-  # --- Apache Superset ---
-  superset:
-    image: apache/superset:latest
-    container_name: superset
-    depends_on:
-      - postgres
     ports:
       - "8088:8088"
+
+  nodemanager:
+    image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
+    container_name: nodemanager
+    depends_on:
+      - resourcemanager
+
+  spark-master:
+    image: apache/spark:3.5.7
+    container_name: spark-master
     environment:
-      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-this_is_not_a_secure_key_change_in_production}
-      SUPERSET_ADMIN_USERNAME: ${SUPERSET_ADMIN_USERNAME:-admin}
-      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin}
-      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@local}
-      SUPERSET_ADMIN_FIRSTNAME: ${SUPERSET_ADMIN_FIRSTNAME:-Admin}
-      SUPERSET_ADMIN_LASTNAME: ${SUPERSET_ADMIN_LASTNAME:-User}
-    volumes:
-      - superset_home:/app/superset
+      - SPARK_MODE=master
     command: >
-      bash -c "
-        superset db upgrade &&
-        superset fab create-admin \
-          --username $$SUPERSET_ADMIN_USERNAME \
-          --firstname $$SUPERSET_ADMIN_FIRSTNAME \
-          --lastname $$SUPERSET_ADMIN_LASTNAME \
-          --email $$SUPERSET_ADMIN_EMAIL \
-          --password $$SUPERSET_ADMIN_PASSWORD &&
-        superset init
-      "
-    networks:
-      - bigdata-net
+      bash -c "/opt/spark/sbin/start-master.sh && tail -f /dev/null"
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    depends_on:
+      - namenode
+
+  spark-worker:
+    image: apache/spark:3.5.7
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER=spark://spark-master:7077
+    command: >
+      bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
+    depends_on:
+      - spark-master
+
+  nifi:
+    image: apache/nifi:1.28.1
+    container_name: nifi
+    ports:
+      - "8081:8080"
+    environment:
+      - NIFI_WEB_HTTP_PORT=8080
+    volumes:
+      - nifi-data:/opt/nifi/nifi-current/logs
+
+  jupyter:
+    image: jupyter/pyspark-notebook:x86_64-spark-3.5.0
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./work:/home/jovyan/work
+    environment:
+      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell
+    depends_on:
+      - spark-master
 
 volumes:
-  postgres_data:
-  hadoop_namenode:
-  hadoop_datanode:
-  nifi_database_repository:
-  nifi_flowfile_repository:
-  nifi_content_repository:
-  nifi_provenance_repository:
-  superset_home:
-  hadoop_warehouse:
-
-networks:
-  bigdata-net:
-    driver: bridge
+  namenode-data:
+  datanode-data:
+  nifi-data:
