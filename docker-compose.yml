@@ -71,6 +71,7 @@ services:
       #- ./nifi/conf:/opt/nifi/nifi-current/conf
       #- ./nifi/logs:/opt/nifi/nifi-current/logs
       - ./work/dataset:/dataset
+      - ./nifi/conf/hadoop:/opt/nifi/nifi-current/conf/hadoop
 
   jupyter:
     image: jupyter/pyspark-notebook:x86_64-spark-3.5.0
