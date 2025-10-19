@@ -34,7 +34,7 @@ services:
       - resourcemanager
 
   spark-master:
-    image: apache/spark:3.5.7
+    image: apache/spark:3.5.0
     container_name: spark-master
     environment:
       - SPARK_MODE=master
@@ -47,7 +47,7 @@ services:
       - namenode
 
   spark-worker:
-    image: apache/spark:3.5.7
+    image: apache/spark:3.5.0
     container_name: spark-worker
     environment:
       - SPARK_MODE=worker
