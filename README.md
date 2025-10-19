@@ -8,26 +8,25 @@ flowchart TD
     classDef mllib fill:#7e318e,stroke:#5a1a66,color:#fff,rx:12,ry:12;
     classDef viz fill:#2ca02c,stroke:#1b661b,color:#fff,rx:12,ry:12;
     classDef eda fill:#ff9800,stroke:#d16e00,color:#fff,rx:12,ry:12;
+    classDef intermediate fill:#9c27b0,stroke:#6a0080,color:#fff,rx:12,ry:12;
 
     A[Data Source] --> B["Apache NiFi<br>(Pecah dataset menjadi<br>beberapa bagian untuk<br>simulasi stream data)"]
     B --> C["HDFS<br>(Store raw data)"]
     C --> D["Apache Spark<br>(Exploratory Data Analysis<br>— EDA —)"]
-    D --> E["Apache Spark<br>(Filter: 'generation'<br>panjang > 10 karakter)"]
-    E --> F["HDFS<br>(Store filtered data)"]
-    F --> G["Apache Spark<br>(Split: 70% train,<br>30% test)"]
-    
+    D --> E["Apache Spark<br>(Filter: 'generation'<br>panjang > 50 karakter &<br>Split: 70% train, 30% test)"]
+
     %% Cabang Train
-    G --> H1["HDFS<br>(Store train data)"]
+    E --> H1["Train Data"]
     H1 --> I1["Apache Spark NLP<br>(Ekstraksi Fitur BERT<br>pada data train)"]
-    I1 --> J1["HDFS<br>(Store train features)"]
-    J1 --> K["Spark MLlib<br>(Train: SVM / SVC)"]
+    I1 --> J1["HDFS<br>(Store Train Features)"]
+    J1 --> K["Spark MLlib<br>(Train Model)"]
     K --> L["HDFS<br>(Store trained model)"]
-    
+
     %% Cabang Test
-    G --> H2["HDFS<br>(Store test data)"]
+    E --> H2["Test Data"]
     H2 --> I2["Apache Spark NLP<br>(Ekstraksi Fitur BERT<br>pada data test)"]
-    I2 --> J2["HDFS<br>(Store test features)"]
-    
+    I2 --> J2["HDFS<br>(Store Test Features)"]
+
     %% Gabung untuk evaluasi
     K --> M
     J2 --> M
@@ -37,11 +36,12 @@ flowchart TD
     %% Terapkan kelas warna
     class A source;
     class B nifi;
-    class C,F,H1,H2,J1,J2,L hdfs;
-    class D,E,G,I1,I2 spark;
+    class C,J1,J2,L hdfs;
+    class D,E,I1,I2 spark;
     class K mllib;
     class M viz;
     class D eda;
+    class H1,H2 intermediate;
 ```
 
 | Komponen                 | URL Akses                                      | Fungsi                                             |
