@@ -18,20 +18,18 @@ flowchart TD
     %% Cabang Train
     E --> H1["Train Data"]
     H1 --> I1["Apache Spark MLlib<br>(Preprocessing & Ekstraksi Fitur<br>Pada Data Test)"]
-    I1 --> J1["HDFS<br>(Store Train Features)"]
-    J1 --> K["Spark MLlib<br>(Train Model)"]
+    I1 --> K["Spark MLlib<br>(Train Model)"]
     K --> L["HDFS<br>(Store trained model)"]
 
     %% Cabang Test
     E --> H2["Test Data"]
     H2 --> I2["Apache Spark MLlib<br>(Preprocessing & Ekstraksi Fitur<br>Pada Data Test)"]
-    I2 --> J2["HDFS<br>(Store Test Features)"]
 
     %% Gabung untuk evaluasi
     K --> M
-    J2 --> M
+    I2 --> M
     L --> M
-    M["Python + Matplotlib / Seaborn via PySpark<br>(Evaluation & Visualization)"]
+    M["Evaluation & Visualization"]
 
     %% Terapkan kelas warna
     class A source;
