@@ -12,7 +12,7 @@ flowchart TD
 
     A[Data Source] --> B["Apache NiFi<br>(Pecah dataset menjadi<br>beberapa bagian untuk<br>simulasi stream data)"]
     B --> C["HDFS<br>(Store raw data)"]
-    C --> D["Apache Spark<br>(Exploratory Data Analysis<br>— EDA —)"]
+    C --> D["Apache Spark<br>(Exploratory Data Analysis)"]
     D --> E["Apache Spark<br>(Filter: 'generation'<br>panjang > 50 karakter &<br>Split: 70% train, 30% test)"]
 
     %% Cabang Train
