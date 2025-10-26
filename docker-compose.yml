@@ -63,6 +63,28 @@ services:
       - SPARK_MASTER=spark://spark-master:7077
     command: bash -c "/opt/spark/sbin/start-worker.sh spark://spark-master:7077 && tail -f /dev/null"
     depends_on: [spark-master]
+    
+  spark-thrift:
+    image: apache/spark:3.5.0
+    container_name: spark-thrift
+    environment:
+      - SPARK_MODE=thrift
+      - HIVE_SERVER2_THRIFT_PORT=10000
+      - HIVE_SERVER2_THRIFT_BIND_HOST=0.0.0.0
+    command: >
+      bash -c "
+        /opt/spark/sbin/start-thriftserver.sh \
+          --master spark://spark-master:7077 \
+          --conf spark.sql.hive.thriftServer.singleSession=true \
+          --conf spark.hadoop.hive.server2.thrift.port=10000 \
+          --conf spark.hadoop.hive.server2.thrift.bind.host=0.0.0.0 \
+          && tail -f /dev/null
+      "
+    ports:
+      - "10000:10000"
+    depends_on:
+      - spark-master
+      - namenode
 
   nifi:
     image: apache/nifi:1.28.1
