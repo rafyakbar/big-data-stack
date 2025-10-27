@@ -77,15 +77,15 @@ services:
       - SPARK_MODE=thrift
       - HIVE_SERVER2_THRIFT_PORT=10000
       - HIVE_SERVER2_THRIFT_BIND_HOST=0.0.0.0
-    command: >
-      bash -c "
-        /opt/spark/sbin/start-thriftserver.sh \
-          --master spark://spark-master:7077 \
-          --conf spark.sql.hive.thriftServer.singleSession=true \
-          --conf spark.hadoop.hive.server2.thrift.port=10000 \
-          --conf spark.hadoop.hive.server2.thrift.bind.host=0.0.0.0 \
-          && tail -f /dev/null
-      "
+    command: [
+      "bash", "-c",
+      "/opt/spark/sbin/start-thriftserver.sh \
+        --master spark://spark-master:7077 \
+        --conf spark.sql.hive.thriftServer.singleSession=true \
+        --conf spark.hadoop.hive.server2.thrift.port=10000 \
+        --conf spark.hadoop.hive.server2.thrift.bind.host=0.0.0.0 \
+        && tail -f /dev/null"
+    ]
     ports:
       - "10000:10000"
     volumes:
@@ -115,6 +115,7 @@ services:
     container_name: jupyter
     ports:
       - "8888:8888"
+      - "7860:7860"
     volumes:
       - ./work:/home/jovyan/work
     environment:
