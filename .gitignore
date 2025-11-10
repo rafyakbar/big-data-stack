@@ -4,3 +4,5 @@ work/dataset/.ipynb_checkpoints/
 what_i_have_done.txt
 work/dataset/raid-filtered.jsonl
 work/.gradio/
+work/dataset/raid_xlm-roberta_human-gpt4.jsonl
+work/__pycache__/
