@@ -10,36 +10,33 @@ flowchart TD
     classDef eda fill:#ff9800,stroke:#d16e00,color:#fff,rx:12,ry:12;
     classDef intermediate fill:#9c27b0,stroke:#6a0080,color:#fff,rx:12,ry:12;
 
-    A[Data Source] --> B["Apache NiFi<br>(Pecah dataset menjadi<br>beberapa bagian untuk<br>simulasi stream data)"]
+    A[Data Source] --> B["Apache NiFi<br>(Simulate Streaming)"]
     B --> C["HDFS<br>(Store raw data)"]
-    C --> D["Apache Spark<br>(Exploratory Data Analysis)"]
-    D --> E["Apache Spark<br>(Filter: 'generation'<br>panjang > 50 karakter &<br>Split: 70% train, 30% test)"]
+    C --> D["Apache Spark<br>(Filter Data)"]
 
     %% Cabang Train
-    E --> H1["Train Data"]
-    H1 --> I1["Apache Spark MLlib<br>(Preprocessing & Ekstraksi Fitur<br>Pada Data Test)"]
-    I1 --> K["Spark MLlib<br>(Train Model)"]
-    K --> L["HDFS<br>(Store trained model)"]
+    D --> H1["Train Data"]
+    H1 --> I1["Apache Spark MLlib<br>(Preprocessing & Feature Extraction)"]
+    I1 --> K["Apache Spark MLlib<br>(Train Model)"]
+    K --> L["HDFS<br>(Store Trained model)"]
 
     %% Cabang Test
-    E --> H2["Test Data"]
-    H2 --> I2["Apache Spark MLlib<br>(Preprocessing & Ekstraksi Fitur<br>Pada Data Test)"]
+    D --> H2["Test Data"]
+    H2 --> I2["Apache Spark MLlib<br>(Preprocessing & Feature Extraction)"]
 
-    %% Gabung untuk evaluasi
-    K --> M
-    I2 --> M
+    %% Gabungan untuk evaluasi
+    I2 --> M["Evaluation"]
     L --> M
-    M["Evaluation & Visualization"]
 
     %% Terapkan kelas warna
     class A source;
     class B nifi;
-    class C,J1,J2,L hdfs;
-    class D,E,I1,I2 spark;
+    class C,L hdfs;
+    class D,I1,I2 spark;
     class K mllib;
     class M viz;
-    class D eda;
     class H1,H2 intermediate;
+
 ```
 
 | Komponen                 | URL Akses                                      | Fungsi                                             |
