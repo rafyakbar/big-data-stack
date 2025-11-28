@@ -16,27 +16,24 @@ flowchart TD
 
     %% Cabang Train
     D --> H1["Train Data"]
-    H1 --> I1["Apache Spark MLlib<br>(Preprocessing & Feature Extraction)"]
-    I1 --> K["Apache Spark MLlib<br>(Train Model)"]
+    H1 --> K["Apache Spark MLlib<br>(Pipeline & Train Model)"]
     K --> L["HDFS<br>(Store Trained model)"]
 
     %% Cabang Test
     D --> H2["Test Data"]
-    H2 --> I2["Apache Spark MLlib<br>(Preprocessing & Feature Extraction)"]
 
     %% Gabungan untuk evaluasi
-    I2 --> M["Evaluation"]
+    H2 --> M["Evaluation"]
     L --> M
 
     %% Terapkan kelas warna
     class A source;
     class B nifi;
     class C,L hdfs;
-    class D,I1,I2 spark;
+    class D spark;
     class K mllib;
     class M viz;
-    class H1,H2 intermediate;
-
+    class H1,H2 source;
 ```
 
 | Komponen                 | URL Akses                                      | Fungsi                                             |
